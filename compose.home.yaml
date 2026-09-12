@@ -1,0 +1,28 @@
+# Standalone home deployment. Do not merge with compose.yaml (which publishes a local port).
+services:
+  qianji:
+    image: ${QIANJI_IMAGE:-ghcr.io/cloverstd/qianji-bridge:latest}
+    container_name: qianji
+    restart: unless-stopped
+    environment:
+      APP_ORIGIN: https://${QIANJI_DOMAIN:qianji.example.com}
+      COOKIE_SECURE: "true"
+      ENABLE_DEMO: "false"
+      ENABLE_MCP: "true"
+    volumes:
+      - ./data:/app/data
+    networks:
+      - traefik-net
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: traefik-net
+      traefik.http.routers.qianji.rule: Host(`${QIANJI_DOMAIN:qianji.example.com}`)
+      traefik.http.routers.qianji.entrypoints: websecure
+      traefik.http.routers.qianji.tls: "true"
+      traefik.http.routers.qianji.service: qianji
+      traefik.http.services.qianji.loadbalancer.server.port: "3001"
+    security_opt:
+      - no-new-privileges:true
+networks:
+  traefik-net:
+    external: true

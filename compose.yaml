@@ -1,0 +1,17 @@
+services:
+  qianji:
+    image: ${QIANJI_IMAGE:-ghcr.io/cloverstd/qianji-bridge:latest}
+    ports:
+      - "127.0.0.1:3001:3001"
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3001}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ENABLE_DEMO: ${ENABLE_DEMO:-true}
+      ENABLE_MCP: ${ENABLE_MCP:-false}
+    volumes:
+      - qianji-data:/app/data
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+volumes:
+  qianji-data:

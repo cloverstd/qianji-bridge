@@ -1,0 +1,22 @@
+# Allow only the inputs needed by the production Dockerfile.
+**
+!Dockerfile
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.server.json
+!vite.config.ts
+!index.html
+!server/
+!server/**
+!shared/
+!shared/**
+!web/
+!web/**
+**/*.key
+**/*.pem
+**/*.secret
+**/*.db
+**/*.sqlite*
+**/.env*
+**/*.log

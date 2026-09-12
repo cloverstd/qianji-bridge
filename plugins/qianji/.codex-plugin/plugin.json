@@ -1,0 +1,19 @@
+{
+  "name": "qianji",
+  "version": "0.2.0",
+  "description": "通过私有 MCP tunnel 查询个人钱迹账本、分析收支和执行已验证的账单操作。",
+  "author": {
+    "name": "Local developer"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "钱迹",
+    "shortDescription": "查询账单、分析收支、查看预算",
+    "longDescription": "通过私有 MCP tunnel 查询个人钱迹账本、分析收支和执行已验证的账单操作。",
+    "developerName": "Local developer",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "查看本月收支，按分类汇总支出，并说明数据同步时间。"
+  },
+  "apps": "./.app.json"
+}

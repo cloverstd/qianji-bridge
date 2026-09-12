@@ -1,0 +1,28 @@
+# Overlay: docker compose -f compose.home.yaml -f compose.tunnel.yaml --profile chatgpt up -d
+services:
+  qianji-tunnel:
+    image: ghcr.io/openai/tunnel-client:v0.0.14
+    profiles: [chatgpt]
+    restart: unless-stopped
+    # Share loopback with qianji: MCP never binds to the LAN or Traefik network.
+    network_mode: service:qianji
+    depends_on:
+      qianji:
+        condition: service_healthy
+        restart: true
+    command: ["--control-plane.api-key=file:/run/secrets/openai_tunnel_key"]
+    environment:
+      CONTROL_PLANE_TUNNEL_ID: ${CONTROL_PLANE_TUNNEL_ID:-}
+      MCP_SERVER_URL: http://127.0.0.1:3002/mcp
+      HEALTH_LISTEN_ADDR: 127.0.0.1:8080
+      LOG_LEVEL: info
+      LOG_FORMAT: json
+    secrets:
+      - openai_tunnel_key
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      traefik.enable: "false"
+secrets:
+  openai_tunnel_key:
+    file: ./secrets/openai_tunnel_key
