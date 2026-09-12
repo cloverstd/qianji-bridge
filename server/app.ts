@@ -1,4 +1,5 @@
 import { createAccountService, filterSchema } from "./account-service.js";
+import { TunnelManager, type TunnelOptions } from "./tunnel.js";
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import rateLimit from "@fastify/rate-limit";
@@ -27,6 +28,7 @@ export interface AppOptions {
   demo?: boolean;
   serveStatic?: boolean;
   mcpEnabled?: boolean;
+  tunnel?: TunnelOptions;
 }
 export async function createApp(options: AppOptions = {}) {
   const app = Fastify({ logger: false, bodyLimit: 32 * 1024 });
@@ -52,7 +54,18 @@ export async function createApp(options: AppOptions = {}) {
     throw new Error("HTTPS 部署必须设置 COOKIE_SECURE=true");
   await app.register(cookie);
   await app.register(rateLimit, { max: 180, timeWindow: "1 minute" });
-  app.addHook("onClose", () => store.close());
+  const tunnel = new TunnelManager(store, {
+    enabled:
+      (options.mcpEnabled ?? process.env.ENABLE_MCP === "true") &&
+      process.env.ENABLE_MANAGED_TUNNEL !== "false",
+    mcpPort: Number(process.env.MCP_PORT ?? 3002),
+    ...options.tunnel,
+  });
+  app.addHook("onReady", async () => tunnel.startSaved());
+  app.addHook("onClose", async () => {
+    await tunnel.close();
+    store.close();
+  });
   app.addHook("onRequest", async (req, reply) => {
     reply
       .header("X-Content-Type-Options", "nosniff")
@@ -223,6 +236,12 @@ export async function createApp(options: AppOptions = {}) {
     async (req) => service.resources(req.account, req.params.kind, req.query),
   );
   app.get("/api/settings", async (req) => service.settings(req.account));
+  app.get("/api/settings/tunnel", async (req) => tunnel.status(req.account));
+  app.post(
+    "/api/settings/tunnel",
+    { config: { rateLimit: { max: 12, timeWindow: "1 minute" } } },
+    async (req) => tunnel.command(req.account, req.body),
+  );
   app.get("/api/settings/mcp", async (req) => ({
     available: options.mcpEnabled ?? process.env.ENABLE_MCP === "true",
     connected: store.mcpAccount()?.uid === req.account.uid,
@@ -245,6 +264,7 @@ export async function createApp(options: AppOptions = {}) {
           "MCP 已连接其他账号，请先使用该账号断开连接",
           409,
         );
+      tunnel.assertOwner(req.account);
       store.connectMcp(req.account);
     } else store.disconnectMcp(req.account.uid);
     return { connected: store.mcpAccount()?.uid === req.account.uid };
@@ -289,5 +309,5 @@ export async function createApp(options: AppOptions = {}) {
         : reply.sendFile("index.html"),
     );
   }
-  return { app, store, service };
+  return { app, store, service, tunnel };
 }

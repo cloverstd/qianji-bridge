@@ -14,6 +14,7 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import type { Raw, Snapshot } from "../shared/types.js";
+import type { TunnelConfig } from "../shared/tunnel.js";
 export interface Session {
   uid: string;
   devid: string;
@@ -115,6 +116,19 @@ export class Store {
   disconnectMcp(uid: string) {
     if (this.mcpAccount()?.uid === uid)
       this.db.prepare("DELETE FROM integrations WHERE name='mcp'").run();
+  }
+  tunnelConfig(): TunnelConfig | undefined {
+    const row = this.db
+      .prepare("SELECT value FROM integrations WHERE name='tunnel'")
+      .get() as { value: string } | undefined;
+    return row ? this.decrypt(row.value) : undefined;
+  }
+  saveTunnelConfig(config: TunnelConfig | undefined) {
+    if (config)
+      this.db
+        .prepare("INSERT OR REPLACE INTO integrations VALUES ('tunnel',?)")
+        .run(this.encrypt(config));
+    else this.db.prepare("DELETE FROM integrations WHERE name='tunnel'").run();
   }
   snapshot(uid: string): Snapshot {
     const row = this.db

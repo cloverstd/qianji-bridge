@@ -1858,3 +1858,38 @@ tbody tr:hover {
     font-size: 14px;
   }
 }
+
+.tunnel-settings {
+  border-top: 1px solid var(--border, #e5eae8);
+  margin-top: 24px;
+  padding-top: 24px;
+}
+.tunnel-form {
+  display: grid;
+  gap: 16px;
+  margin: 20px 0;
+  max-width: 760px;
+}
+.tunnel-form input {
+  width: 100%;
+  min-width: 0;
+}
+.tunnel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.tunnel-help {
+  margin-top: 24px;
+  line-height: 1.8;
+}
+.tunnel-help summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.tunnel-help ol {
+  padding-left: 24px;
+}
+.tunnel-help a {
+  text-decoration: underline;
+}

@@ -1,4 +1,7 @@
+import { createServer } from "node:net";
 // Test-only upstream. Production startup never imports this module.
+import { spawn } from "node:child_process";
+import { resolve } from "node:path";
 import { createApp } from "../server/app.js";
 import { AppError, md5, type Client } from "../server/client.js";
 import { demoSnapshot, demoResource } from "../server/demo.js";
@@ -7,6 +10,10 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Raw } from "../shared/types.js";
+const portProbe = createServer();
+await new Promise<void>((resolve) => portProbe.listen(0, "127.0.0.1", resolve));
+const healthPort = (portProbe.address() as import("node:net").AddressInfo).port;
+await new Promise<void>((resolve) => portProbe.close(() => resolve()));
 const directory = mkdtempSync(join(tmpdir(), "qianji-browser-"));
 const snapshot = demoSnapshot();
 snapshot.user = { id: "100", name: "浏览器测试", email: "browser@example.com" };
@@ -100,6 +107,15 @@ const fake: Client = {
 const port = Number(process.env.QIANJI_TEST_PORT ?? 3001);
 const { app } = await createApp({
   mcpEnabled: true,
+  tunnel: {
+    enabled: true,
+    healthPort,
+    launch: (env) =>
+      spawn(process.execPath, [resolve("tests/fixtures/tunnel-client.mjs")], {
+        env,
+        stdio: "ignore",
+      }),
+  },
   directory,
   client: fake,
   origins: [`http://localhost:${port}`],

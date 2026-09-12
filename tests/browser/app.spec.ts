@@ -133,6 +133,57 @@ test("account login auto-syncs and test write confirmation survives refresh with
     page.getByRole("button", { name: "断开 MCP 连接", exact: true }),
   ).toBeVisible();
   await page
+    .getByLabel("Tunnel ID", { exact: true })
+    .fill("tunnel_00000000000000000000000000000003");
+  await page
+    .getByLabel("Tunnel 运行密钥", { exact: true })
+    .fill("TEST_ONLY_BROWSER_TUNNEL_KEY");
+  await page
+    .getByRole("button", { name: "保存并连接 Tunnel", exact: true })
+    .click();
+  await expect(page.getByText("已就绪", { exact: true })).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(page.getByLabel("Tunnel 运行密钥", { exact: true })).toHaveValue(
+    "",
+  );
+  await page.reload();
+  await expect(page.getByLabel("Tunnel ID", { exact: true })).toHaveValue(
+    "tunnel_00000000000000000000000000000003",
+  );
+  await expect(page.getByLabel("Tunnel 运行密钥", { exact: true })).toHaveValue(
+    "",
+  );
+  await page.getByRole("button", { name: "停用 Tunnel", exact: true }).click();
+  await expect(page.getByText("已停用", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "重新连接", exact: true }).click();
+  await expect(page.getByText("已就绪", { exact: true })).toBeVisible({
+    timeout: 15000,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+  await expect
+    .poll(() =>
+      page
+        .locator(".sidebar")
+        .evaluate((el) => el.getBoundingClientRect().right),
+    )
+    .toBeLessThanOrEqual(0);
+  await page.screenshot({
+    path: "test-results/mobile-tunnel.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page
+    .getByRole("button", { name: "删除 Tunnel 配置", exact: true })
+    .click();
+  await page.getByRole("button", { name: "确认删除配置", exact: true }).click();
+  await expect(page.getByLabel("Tunnel ID", { exact: true })).toHaveValue("");
+  await page
     .getByRole("button", { name: "断开 MCP 连接", exact: true })
     .click();
   await expect(

@@ -1,3 +1,5 @@
+FROM ghcr.io/openai/tunnel-client:v0.0.14@sha256:41d7c85dab37797a3eaa17c41b94a7206dd0bc186fd361034c9ec3863596ff6c AS tunnel-client
+
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -10,6 +12,8 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 FROM node:22-bookworm-slim
+COPY --from=tunnel-client /usr/bin/tunnel-client /usr/local/bin/tunnel-client
+COPY --from=tunnel-client /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3001 DATA_DIR=/app/data
 WORKDIR /app
 COPY --from=build --chown=node:node /app/node_modules ./node_modules

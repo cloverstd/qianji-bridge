@@ -42,7 +42,7 @@ Traefik 部署示例见 `compose.home.yaml`，请配置自己的域名及外部�
 
 ## ChatGPT / MCP
 
-已实现 15 个免鉴权 MCP 工具，使用独立回环端口和 OpenAI Secure MCP Tunnel 接入个人 ChatGPT 自定义插件。网页版设置可连接或撤销 MCP 账号；写入沿用真实测试验证门禁。
+已实现 15 个免鉴权 MCP 工具，使用独立回环端口和 OpenAI Secure MCP Tunnel 接入个人 ChatGPT 自定义插件。网页版设置可连接或撤销 MCP 账号、填写 Tunnel ID 与运行密钥、查看连接状态、重连或停用。Docker 镜像内置官方客户端，密钥加密保存；写入沿用真实测试验证门禁。
 
 部署与 ChatGPT 注册步骤见 [MCP 与 ChatGPT Tunnel](./docs/07-MCP与ChatGPT-Tunnel.md)。
 

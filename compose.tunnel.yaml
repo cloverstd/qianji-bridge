@@ -1,5 +1,8 @@
 # Overlay: docker compose -f compose.home.yaml -f compose.tunnel.yaml --profile chatgpt up -d
 services:
+  qianji:
+    environment:
+      ENABLE_MANAGED_TUNNEL: "false"
   qianji-tunnel:
     image: ghcr.io/openai/tunnel-client:v0.0.14
     profiles: [chatgpt]

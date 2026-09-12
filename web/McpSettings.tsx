@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TunnelSettings } from "./TunnelSettings";
 import { Plug } from "lucide-react";
 import { api, useRemote } from "./api";
 import { Notice } from "./ui";
@@ -77,6 +78,11 @@ export function McpSettings({
         不另设密码；钱迹登录凭证仅加密保存于服务器。退出网页不影响
         MCP，需要停止访问时请在这里断开。钱迹凭证过期后重新登录即可更新。
       </p>
+      <TunnelSettings
+        version={version}
+        demo={demo}
+        connected={!!remote.data?.connected}
+      />
     </section>
   );
 }

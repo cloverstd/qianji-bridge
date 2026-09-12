@@ -7,6 +7,7 @@ services:
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:3001}
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
       ENABLE_DEMO: ${ENABLE_DEMO:-true}
+      ENABLE_MANAGED_TUNNEL: ${ENABLE_MANAGED_TUNNEL:-true}
       ENABLE_MCP: ${ENABLE_MCP:-false}
     volumes:
       - qianji-data:/app/data

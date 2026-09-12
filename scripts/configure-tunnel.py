@@ -11,7 +11,7 @@ parser.add_argument('--tunnel-id', required=True)
 parser.add_argument('--key-file', type=Path, required=True, help='Existing runtime API key file; never pass the key itself')
 parser.add_argument('--directory', type=Path, default=Path(__file__).resolve().parent.parent)
 args = parser.parse_args()
-if not re.fullmatch(r'tunnel_[A-Za-z0-9_-]{8,128}', args.tunnel_id):
+if not re.fullmatch(r'tunnel_[a-z0-9]{32}', args.tunnel_id):
     parser.error('Invalid tunnel ID')
 root = args.directory.resolve()
 if not (root / 'compose.home.yaml').is_file() or not (root / 'compose.tunnel.yaml').is_file():
