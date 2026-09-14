@@ -225,3 +225,67 @@ test("account login auto-syncs and test write confirmation survives refresh with
     page.getByRole("heading", { name: "登录你的钱迹账号" }),
   ).toBeVisible();
 });
+
+test("bill entry and five-minute auto-sync deduplicate requests and stop after logout", async ({
+  page,
+}) => {
+  await page.clock.install();
+  let calls = 0;
+  let release: (() => void) | undefined;
+  await page.route("**/api/sync", async (route) => {
+    calls++;
+    if (calls === 2)
+      await new Promise<void>((resolve) => {
+        release = resolve;
+      });
+    if (calls === 3)
+      return route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ message: "测试同步失败" }),
+      });
+    await route.continue();
+  });
+  await page.goto("/");
+  await page
+    .getByRole("textbox", { name: "邮箱", exact: true })
+    .fill("browser@example.com");
+  await page.getByLabel("密码", { exact: true }).fill("test-password");
+  await page.getByRole("button", { name: "登录并连接" }).click();
+  await expect(page.locator(".bill-table tbody tr")).not.toHaveCount(0);
+  // Existing account snapshots may already be present from other browser tests.
+  await expect(
+    page.getByRole("button", { name: "同步账单", exact: true }),
+  ).toBeEnabled();
+  calls = 1;
+  await page.getByRole("button", { name: "账单明细", exact: true }).click();
+  await expect.poll(() => calls).toBe(2);
+  await page.getByRole("button", { name: "总览", exact: true }).click();
+  await page.getByRole("button", { name: "账单明细", exact: true }).click();
+  await page.clock.fastForward(5 * 60 * 1000);
+  expect(calls).toBe(2);
+  release!();
+  await expect(
+    page.getByRole("button", { name: "同步账单", exact: true }),
+  ).toBeEnabled();
+  await page.clock.fastForward(5 * 60 * 1000);
+  await expect.poll(() => calls).toBe(3);
+  await expect(page.getByRole("alert")).toContainText("测试同步失败");
+  await expect(page.locator(".bill-table tbody tr")).not.toHaveCount(0);
+  await page.clock.fastForward(5 * 60 * 1000);
+  await expect.poll(() => calls).toBe(4);
+  await expect(
+    page.getByRole("button", { name: "同步账单", exact: true }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "设置", exact: true }).click();
+  await page.getByRole("button", { name: "退出账号", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "登录你的钱迹账号" }),
+  ).toBeVisible();
+  await page.clock.fastForward(5 * 60 * 1000);
+  expect(calls).toBe(4);
+  await page.getByRole("button", { name: "体验演示账本" }).click();
+  await page.getByRole("button", { name: "账单明细", exact: true }).click();
+  await page.clock.fastForward(5 * 60 * 1000);
+  expect(calls).toBe(4);
+});

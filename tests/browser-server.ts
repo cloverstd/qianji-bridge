@@ -107,6 +107,8 @@ const fake: Client = {
 const port = Number(process.env.QIANJI_TEST_PORT ?? 3001);
 const { app } = await createApp({
   mcpEnabled: true,
+  // Virtual clock tests compress minutes of requests into seconds. Production remains 180/min.
+  rateLimitMax: 2000,
   tunnel: {
     enabled: true,
     healthPort,

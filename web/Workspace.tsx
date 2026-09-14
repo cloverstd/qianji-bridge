@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   LayoutDashboard,
   ReceiptText,
@@ -106,35 +106,48 @@ export function Workspace({ onLogout }: { onLogout: () => void }) {
     version,
   );
   const firstSync = React.useRef(false);
+  const syncInFlight = React.useRef(false);
+  const refresh = () => setVersion((v) => v + 1);
+  const sync = useCallback(async (full = false) => {
+    if (syncInFlight.current) return;
+    syncInFlight.current = true;
+    setSyncing(true);
+    setError("");
+    try {
+      await api("/sync", { full });
+      setVersion((v) => v + 1);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      syncInFlight.current = false;
+      setSyncing(false);
+    }
+  }, []);
+  const canAutoSync = !!bootstrap && !bootstrap.demo;
   useEffect(() => {
     const listener = () => setPage(location.hash.slice(1) || "overview");
     window.addEventListener("hashchange", listener);
     return () => window.removeEventListener("hashchange", listener);
   }, []);
   useEffect(() => {
-    if (
-      bootstrap &&
-      !bootstrap.lastSync &&
-      !bootstrap.demo &&
-      !firstSync.current
-    ) {
+    if (canAutoSync && !bootstrap.lastSync && !firstSync.current) {
       firstSync.current = true;
       void sync();
     }
-  }, [bootstrap]);
-  const refresh = () => setVersion((v) => v + 1);
-  async function sync(full = false) {
-    setSyncing(true);
-    setError("");
-    try {
-      await api("/sync", { full });
-      refresh();
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setSyncing(false);
-    }
-  }
+  }, [canAutoSync, bootstrap?.lastSync, sync]);
+  useEffect(() => {
+    if (canAutoSync && page === "bills") void sync();
+  }, [canAutoSync, page, sync]);
+  useEffect(() => {
+    if (!canAutoSync) return;
+    const timer = window.setInterval(
+      () => {
+        void sync();
+      },
+      5 * 60 * 1000,
+    );
+    return () => window.clearInterval(timer);
+  }, [canAutoSync, sync]);
   function nav(key: string) {
     location.hash = key;
     setPage(key);

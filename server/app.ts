@@ -28,6 +28,7 @@ export interface AppOptions {
   demo?: boolean;
   serveStatic?: boolean;
   mcpEnabled?: boolean;
+  rateLimitMax?: number;
   tunnel?: TunnelOptions;
 }
 export async function createApp(options: AppOptions = {}) {
@@ -53,7 +54,10 @@ export async function createApp(options: AppOptions = {}) {
   )
     throw new Error("HTTPS 部署必须设置 COOKIE_SECURE=true");
   await app.register(cookie);
-  await app.register(rateLimit, { max: 180, timeWindow: "1 minute" });
+  await app.register(rateLimit, {
+    max: options.rateLimitMax ?? 180,
+    timeWindow: "1 minute",
+  });
   const tunnel = new TunnelManager(store, {
     enabled:
       (options.mcpEnabled ?? process.env.ENABLE_MCP === "true") &&
